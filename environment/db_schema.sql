@@ -1,0 +1,4 @@
+-- Simulated payroll environment schema (Phase 1)
+-- Tables: payroll_calendar, runbook_steps, task_status, inbound_feeds,
+-- outbound_log, users, notifications, escalations
+-- To be defined when Phase 1 is implemented.
