@@ -1,0 +1,16 @@
+[theme]
+base = "light"
+primaryColor = "#2f8f96"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F6F1E4"
+textColor = "#131d3b"
+font = "sans serif"
+
+[server]
+headless = true
+
+[client]
+# Hides the built-in "Deploy" button + menu (Streamlit Community Cloud
+# deploy shortcut) - irrelevant for a local demo. Keeps the running-status
+# indicator; "minimal" only strips the deploy/menu chrome, not functionality.
+toolbarMode = "minimal"

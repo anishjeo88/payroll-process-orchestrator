@@ -1,5 +1,16 @@
-anthropic>=0.40.0
-streamlit>=1.38.0
-chromadb>=0.5.0
-python-dotenv>=1.0.1
-pydantic>=2.8.0
+anthropic==1.2.0
+streamlit==1.62.0
+python-dotenv==1.2.3
+pandas==3.0.5
+
+# Multi-agent coordination (Checkpoint 5) - all genuinely imported and used,
+# not just declared. Requires Python 3.10+ (crewai's constraint) - see
+# README's Setup section for the project-local Python 3.11 venv.
+langgraph==1.2.11
+langchain==1.3.18
+langchain-core==1.6.1
+langchain-anthropic==1.7.0
+crewai==1.15.18
+
+# Knowledge Retrieval Agent's vector store (Checkpoints 3 & 5)
+chromadb==1.1.1
