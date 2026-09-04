@@ -12,6 +12,9 @@ venv/
 data/*.db
 data/chroma/
 
+# Generated banner PNGs (interface/theme.py renders + caches these on first use)
+interface/assets/banners/
+
 # Streamlit
 .streamlit/secrets.toml
 
