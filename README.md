@@ -11,7 +11,7 @@ observing cycle state, reasoning about the highest-priority next action, and tak
 real actions — sending reminders, routing escalations, summarizing status per role —
 instead of relying on manual tracking across email/chat/spreadsheets.
 
-## Architecture (Checkpoint 6)
+## Architecture
 
 A five-agent system, not a single agent:
 
@@ -39,7 +39,7 @@ split across SQLite (structured: delay patterns, exception history, via the
 Historical Cycle Store tool) and Chroma (semantic: Knowledge Retrieval Agent
 only).
 
-**Safety guardrails (Checkpoint 6):**
+**Safety guardrails:**
 - *Static constraints* — per-agent tool-access scoping, the Tier 1/2/3 escalation
   ceiling, notification deduplication, and a source-version filter on RAG.
 - *Dynamic runtime enforcement* — a groundedness check, a ToT confidence gate,
@@ -55,14 +55,14 @@ agent by the static-constraints guardrail.
 **Interface:** Streamlit app with role-based dashboards, agent chat (with the
 ToT trace for escalation events), and a human-intervention queue.
 
-See [`docs/architecture-diagram-v8.png`](docs/architecture-diagram-v8.png) (Checkpoint 6 / v8)
+See [`docs/architecture-diagram-v8.png`](docs/architecture-diagram-v8.png) (v8)
 for the full visual.
 
 ## Project layout
 
 ```
-docs/          architecture diagram (v8, Checkpoint 6) + sample evaluation
-               report and agent-chat transcript (real recorded output)
+docs/          architecture diagram (v8) + sample evaluation report and
+               agent-chat transcript (real recorded output)
 environment/   simulated payroll "world" (DB schema, seed data, cycle simulator)
 tools/         the 5 agent tools, each scoped to one owning agent
 memory/        short-term context + long-term SQLite/Chroma stores
@@ -152,7 +152,7 @@ try, in order:
 
 ## Evaluation
 
-`evaluation/metrics.py` implements all 7 Checkpoint 6 metrics as real, live
+`evaluation/metrics.py` implements all 7 evaluation metrics as real, live
 computations over the SQLite DB (and a real Chroma query for retrieval
 relevance) — not placeholders. Run it any time:
 
@@ -177,7 +177,7 @@ checked in at
 bug found during manual testing), the escalation-dedup unique constraint
 (a regression test for a real race-condition bug — two near-simultaneous
 cycle passes each creating their own duplicate escalation — found and
-fixed during development), and the Checkpoint 6 guardrail conditions. Runs
+fixed during development), and the safety guardrail conditions. Runs
 against a temp, isolated DB — never `data/payroll.db`.
 
 ## Reviewing without running it
