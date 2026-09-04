@@ -66,7 +66,14 @@ def _get_collection():
     no API key or network call needed for retrieval itself."""
     CHROMA_PATH.mkdir(parents=True, exist_ok=True)
     client = chromadb.PersistentClient(path=str(CHROMA_PATH))
-    collection = client.get_or_create_collection(COLLECTION_NAME)
+    # Chroma's own default distance metric is L2, not cosine, unless told
+    # otherwise here - caught by evaluation/metrics.py's retrieval_relevance
+    # self-check returning a nonsensical negative "similarity" (1 - an L2
+    # distance, which can exceed 1). hnsw:space only takes effect at
+    # creation time, so an already-persisted collection from before this
+    # fix must be deleted (data/chroma/ is gitignored/ephemeral) for it to
+    # actually apply - get_or_create_collection alone won't retrofit it.
+    collection = client.get_or_create_collection(COLLECTION_NAME, metadata={"hnsw:space": "cosine"})
 
     if collection.count() == 0:
         collection.add(

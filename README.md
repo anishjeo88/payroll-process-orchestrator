@@ -61,7 +61,8 @@ for the full visual.
 ## Project layout
 
 ```
-docs/          architecture diagram (current: v8, Checkpoint 6)
+docs/          architecture diagram (v8, Checkpoint 6) + sample evaluation
+               report and agent-chat transcript (real recorded output)
 environment/   simulated payroll "world" (DB schema, seed data, cycle simulator)
 tools/         the 5 agent tools, each scoped to one owning agent
 memory/        short-term context + long-term SQLite/Chroma stores
@@ -69,10 +70,11 @@ agents/        the 5 agents: orchestrator, cycle_monitor, knowledge_retrieval,
                escalation_decision, notification_action + prompts/roles
 coordination/  LangGraph sequential flow, CrewAI escalation flow, MCP state hub
 guardrails/    static constraints, dynamic runtime enforcement, human intervention
-evaluation/    the 7 evaluation metrics (escalation accuracy, groundedness, ...)
+evaluation/    the 7 evaluation metrics, computed live (see Evaluation below)
 interface/     Streamlit GUI (dashboard, agent chat, human-intervention queue, history)
 data/          local SQLite db file + Chroma persistence directory (gitignored)
-tests/         scenario-based tests for the simulated payroll cycle
+tests/         scenario-based pytest tests (dependency-aware risk, escalation
+               dedup, guardrail conditions) - see Testing below
 ```
 
 ## Tech stack — what's actually running vs. declared
@@ -109,6 +111,85 @@ cp .env.example .env                        # then add your ANTHROPIC_API_KEY (o
 python3 -m environment.seed_data             # any Python works for this - no heavy deps
 .venv/bin/python -m streamlit run interface/Home.py
 ```
+
+Opens at `http://localhost:8501`. No API key is required to run it — every
+LLM-backed path degrades to a deterministic fallback (see the tech-stack
+table above); add one to `.env` at any point and the same pages switch over
+automatically, no restart-time flag needed.
+
+## Usage
+
+The app seeds one demo payroll cycle (`2026-09A`, Sep 1-15 2026) and runs
+one full agent pass against it automatically on first load. A few things to
+try, in order:
+
+1. **Home** — pick a role from "Viewing as" (e.g. *Benefits and Compensation
+   Analyst*) - it's remembered across every page, backed by the app's own
+   `app_settings` table rather than browser session state (see
+   `interface/utils.py::role_selector` for why that distinction matters).
+2. **Dashboard** — see every run book step's live risk status (on track /
+   at risk / overdue / **blocked**, e.g. Payroll Calculation Run waiting on
+   Benefits Data Feed Validation), plus the MCP action log under "Recent
+   Activities". Try **Mark a step complete** on an overdue step and watch
+   its risk badge and any downstream "blocked" step update after the
+   cycle pass re-runs.
+3. **Agent Chat** — ask it things: *"What's overdue?"*, *"Any compliance
+   risk?"*, *"Show escalation decisions"*, *"Why is Benefits delayed?"*, or
+   free-form questions like *"what's the escalation policy for a compliance
+   step?"*. The banner tells you whether you're in Smart mode (a real
+   Claude tool-use loop) or Basic mode (deterministic rules) depending on
+   whether `ANTHROPIC_API_KEY` is set. See
+   [`docs/sample-agent-chat-transcript.md`](docs/sample-agent-chat-transcript.md)
+   for real recorded example Q&A.
+4. **Approvals** — the human-in-the-loop queue. Every item here is a Tier
+   2/3 escalation or an at-risk compliance sign-off (never Tier 1, which
+   auto-dispatches). Approve or reject one and check Dashboard/History
+   afterward.
+5. **History** — two seeded past cycles (`2026-08A`, `2026-08B`) plus the
+   known delay patterns Escalation Decision and Knowledge Retrieval draw
+   on — the cross-cycle memory the current cycle's decisions are actually
+   grounded in.
+
+## Evaluation
+
+`evaluation/metrics.py` implements all 7 Checkpoint 6 metrics as real, live
+computations over the SQLite DB (and a real Chroma query for retrieval
+relevance) — not placeholders. Run it any time:
+
+```bash
+.venv/bin/python -m evaluation.metrics
+```
+
+A worked example, with honest interpretation of what each number means at
+this demo's scale (including two real findings it surfaced — a retrieval
+score below target on a small corpus, and a genuine historical delay), is
+checked in at
+[`docs/sample-evaluation-report.md`](docs/sample-evaluation-report.md).
+
+## Testing
+
+```bash
+.venv/bin/python -m pytest tests/ -v
+```
+
+`tests/scenarios/` covers dependency-aware risk derivation (the exact
+"downstream step shows completed while its prerequisite is still overdue"
+bug found during manual testing), the escalation-dedup unique constraint
+(a regression test for a real race-condition bug — two near-simultaneous
+cycle passes each creating their own duplicate escalation — found and
+fixed during development), and the Checkpoint 6 guardrail conditions. Runs
+against a temp, isolated DB — never `data/payroll.db`.
+
+## Reviewing without running it
+
+If you're reviewing rather than running: start with
+[`docs/architecture-diagram-v8.png`](docs/architecture-diagram-v8.png) for
+the visual, then `agents/orchestrator.py` (routing + the Claude tool-use
+loop), `agents/escalation_decision.py` (the CrewAI-backed Tree-of-Thought
+search), and `guardrails/` (the three-layer safety design). The two sample
+artifacts above (`docs/sample-agent-chat-transcript.md`,
+`docs/sample-evaluation-report.md`) are real recorded output, not mockups,
+if you want to see behavior without standing up the environment yourself.
 
 ## Status
 
