@@ -22,7 +22,7 @@ role_selector()
 ensure_cycle_ran()
 
 render_banner("✅ Approval Queue", [
-    "Items for your review and approval",
+    "Payroll Manager's Human-Intervention Queue",
 ])
 
 pending = get_pending_escalations()
